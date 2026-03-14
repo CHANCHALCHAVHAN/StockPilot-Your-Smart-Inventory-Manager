@@ -5,6 +5,7 @@ const bcrypt     = require('bcrypt');
 const jwt        = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const pool       = require('./db');
+const { verifyToken } = require('./middleware');
 
 const app = express();
 app.use(cors({ origin: ['http://localhost:8080', 'http://localhost:5173'] }));
@@ -131,12 +132,29 @@ app.post('/api/verify-otp', async (req, res) => {
       [hashed, result.rows[0].id]
     );
 
-    res.json({ message: 'Password reset successfully.' });
+res.json({ message: 'Password reset successfully.' });
   } catch (err) {
     console.error('Verify OTP error:', err);
     res.status(500).json({ error: 'Server error.' });
   }
 });
 
+// ── Products ──────────────────────────────────────────────────────────────────
+app.get('/api/products', verifyToken, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, sku, name, category, unit_of_measure as "unitOfMeasure", 
+       stock, location, created_at, updated_at 
+       FROM products WHERE user_id = $1 ORDER BY name`,
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Get products error:', err);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Backend running on http://localhost:${PORT}`));
+
