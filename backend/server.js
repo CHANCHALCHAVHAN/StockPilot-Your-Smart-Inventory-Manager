@@ -140,6 +140,8 @@ res.json({ message: 'Password reset successfully.' });
 });
 
 // ── Products ──────────────────────────────────────────────────────────────────
+
+// GET products
 app.get('/api/products', verifyToken, async (req, res) => {
   try {
     const result = await pool.query(
@@ -151,6 +153,64 @@ app.get('/api/products', verifyToken, async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error('Get products error:', err);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+// POST product
+app.post('/api/products', verifyToken, async (req, res) => {
+  const { sku, name, category, unitOfMeasure, stock = 0, location } = req.body;
+  if (!sku || !name || !category || !unitOfMeasure) {
+    return res.status(400).json({ error: 'SKU, name, category, unitOfMeasure required.' });
+  }
+  try {
+    const result = await pool.query(
+      `INSERT INTO products (sku, name, category, unit_of_measure, stock, location, user_id) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [sku, name, category, unitOfMeasure, stock, location, req.user.id]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Create product error:', err);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+// PUT product
+app.put('/api/products/:id', verifyToken, async (req, res) => {
+  const id = req.params.id;
+  const { sku, name, category, unitOfMeasure, stock, location } = req.body;
+  try {
+    const result = await pool.query(
+      `UPDATE products SET sku = $1, name = $2, category = $3, unit_of_measure = $4, 
+       stock = $5, location = $6, updated_at = NOW() 
+       WHERE id = $7 AND user_id = $8 RETURNING *`,
+      [sku, name, category, unitOfMeasure, stock || 0, location, id, req.user.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Product not found.' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Update product error:', err);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+// DELETE product
+app.delete('/api/products/:id', verifyToken, async (req, res) => {
+  const id = req.params.id;
+  try {
+    const result = await pool.query(
+      'DELETE FROM products WHERE id = $1 AND user_id = $2 RETURNING id',
+      [id, req.user.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Product not found.' });
+    }
+    res.json({ message: 'Product deleted.' });
+  } catch (err) {
+    console.error('Delete product error:', err);
     res.status(500).json({ error: 'Server error.' });
   }
 });
