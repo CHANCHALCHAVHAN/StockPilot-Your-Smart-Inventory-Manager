@@ -30,5 +30,7 @@
 
 **Commits**: After each step, `git add . && git commit -m "Step X: [description]"` (~20 lines)
 
-Current: Step 1
+### 4. Backend: Products Part 2 ✓ (POST/PUT/DELETE)
+
+Current: Step 4 ✓ (full products CRUD)
 
