@@ -9,6 +9,7 @@ const LOW_STOCK_THRESHOLD = 10;
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
+  "/warehouse-dashboard": "Warehouse Dashboard",
   "/products": "Products",
   "/receipts": "Receipts",
   "/deliveries": "Delivery Orders",

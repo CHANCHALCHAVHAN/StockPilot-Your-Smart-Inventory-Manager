@@ -8,18 +8,28 @@ import { Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
-  const [loginId, setLoginId] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const login = useAuthStore(s => s.login);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (login(loginId, password)) {
-      navigate("/dashboard");
+    setLoading(true);
+    const result = await login(email, password);
+    setLoading(false);
+
+    if (result.success) {
+      const role = useAuthStore.getState().user?.role;
+      if (role === "Inventory Manager") {
+        navigate("/dashboard");
+      } else {
+        navigate("/warehouse-dashboard");
+      }
     } else {
-      toast({ title: "Authentication Failed", description: "Invalid login ID or password.", variant: "destructive" });
+      toast({ title: "Authentication Failed", description: result.error, variant: "destructive" });
     }
   };
 
@@ -38,23 +48,41 @@ const Login = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4 border border-border rounded-sm p-6 bg-card">
           <div className="space-y-2">
-            <Label htmlFor="loginId" className="text-xs font-mono uppercase tracking-wider">Login ID</Label>
-            <Input id="loginId" value={loginId} onChange={e => setLoginId(e.target.value)} placeholder="Enter login ID" className="font-mono" required />
+            <Label htmlFor="email" className="text-xs font-mono uppercase tracking-wider">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="Enter email"
+              className="font-mono"
+              required
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password" className="text-xs font-mono uppercase tracking-wider">Password</Label>
-            <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter password" className="font-mono" required />
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="Enter password"
+              className="font-mono"
+              required
+            />
           </div>
-          <Button type="submit" className="w-full font-mono uppercase tracking-wider">Sign In</Button>
+          <Button type="submit" className="w-full font-mono uppercase tracking-wider" disabled={loading}>
+            {loading ? "Signing In..." : "Sign In"}
+          </Button>
           <div className="flex justify-between text-xs">
-            <button type="button" className="text-muted-foreground hover:text-primary transition-colors font-mono">Forgot Password?</button>
-            <Link to="/signup" className="text-primary hover:text-primary/80 transition-colors font-mono">Sign Up</Link>
+            <Link to="/forgot-password" className="text-muted-foreground hover:text-primary transition-colors font-mono">
+              Forgot Password?
+            </Link>
+            <Link to="/signup" className="text-primary hover:text-primary/80 transition-colors font-mono">
+              Sign Up
+            </Link>
           </div>
         </form>
-
-        <p className="text-center text-[10px] text-muted-foreground font-mono">
-          Demo: admin / Admin123!
-        </p>
       </div>
     </div>
   );
