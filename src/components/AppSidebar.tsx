@@ -1,70 +1,66 @@
 import {
-  LayoutDashboard,
-  Package,
-  ArrowDownToLine,
-  Truck,
-  SlidersHorizontal,
-  History,
-  Settings,
-  MapPin,
-  UserCircle,
-  LogOut,
-  Warehouse,
-  ChevronDown,
+  LayoutDashboard, Package, ArrowDownToLine, Truck,
+  SlidersHorizontal, History, MapPin, UserCircle,
+  LogOut, Warehouse, ChevronDown, Tag,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarHeader,
-  SidebarFooter,
-  useSidebar,
+  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
+  SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
+  SidebarHeader, SidebarFooter, useSidebar,
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
-const mainItems = [
+// ── Nav item definitions ────────────────────────────────────────────────────
+
+const managerMainItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Products",  url: "/products",  icon: Package },
+];
+
+const staffMainItems = [
+  { title: "Dashboard", url: "/warehouse-dashboard", icon: LayoutDashboard },
 ];
 
 const operationItems = [
-  { title: "Receipts", url: "/receipts", icon: ArrowDownToLine },
-  { title: "Delivery Orders", url: "/deliveries", icon: Truck },
-  { title: "Inventory Adjustment", url: "/adjustments", icon: SlidersHorizontal },
+  { title: "Receipts",              url: "/receipts",     icon: ArrowDownToLine },
+  { title: "Delivery Orders",       url: "/deliveries",   icon: Truck },
+  { title: "Inventory Adjustment",  url: "/adjustments",  icon: SlidersHorizontal },
+  { title: "Move History",          url: "/history",      icon: History },
 ];
 
-const otherItems = [
-  { title: "Products", url: "/products", icon: Package },
-  { title: "Move History", url: "/history", icon: History },
+const staffOperationItems = [
+  { title: "Receipts",        url: "/receipts",   icon: ArrowDownToLine },
+  { title: "Delivery Orders", url: "/deliveries", icon: Truck },
+  { title: "Move History",    url: "/history",    icon: History },
 ];
 
 const settingsItems = [
-  { title: "Warehouse", url: "/settings/warehouse", icon: Warehouse },
-  { title: "Locations", url: "/settings/locations", icon: MapPin },
+  { title: "Warehouses", url: "/settings/warehouse",  icon: Warehouse },
+  { title: "Locations",  url: "/settings/locations",  icon: MapPin },
+  { title: "Categories", url: "/settings/categories", icon: Tag },
 ];
 
+// ── Component ───────────────────────────────────────────────────────────────
+
 export function AppSidebar() {
-  const { state } = useSidebar();
-  const collapsed = state === "collapsed";
-  const location = useLocation();
-  const navigate = useNavigate();
-  const logout = useAuthStore(s => s.logout);
+  const { state }   = useSidebar();
+  const collapsed   = state === "collapsed";
+  const location    = useLocation();
+  const navigate    = useNavigate();
+  const { logout, user } = useAuthStore();
   const currentPath = location.pathname;
+  const isManager   = user?.role === "Inventory Manager";
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
+  const mainItems   = isManager ? managerMainItems : staffMainItems;
+  const opsItems    = isManager ? operationItems   : staffOperationItems;
 
-  const renderItems = (items: typeof mainItems) =>
-    items.map((item) => (
+  const handleLogout = () => { logout(); navigate("/login"); };
+
+  const renderItems = (items: { title: string; url: string; icon: React.ElementType }[]) =>
+    items.map(item => (
       <SidebarMenuItem key={item.title}>
         <SidebarMenuButton asChild>
           <NavLink
@@ -96,13 +92,15 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2">
+        {/* Main / Products */}
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>{renderItems(mainItems)}</SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <Collapsible defaultOpen={operationItems.some(i => currentPath.startsWith(i.url))}>
+        {/* Operations collapsible */}
+        <Collapsible defaultOpen={opsItems.some(i => currentPath.startsWith(i.url))}>
           <SidebarGroup>
             <CollapsibleTrigger className="w-full">
               <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground">
@@ -112,33 +110,30 @@ export function AppSidebar() {
             </CollapsibleTrigger>
             <CollapsibleContent>
               <SidebarGroupContent>
-                <SidebarMenu>{renderItems(operationItems)}</SidebarMenu>
+                <SidebarMenu>{renderItems(opsItems)}</SidebarMenu>
               </SidebarGroupContent>
             </CollapsibleContent>
           </SidebarGroup>
         </Collapsible>
 
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>{renderItems(otherItems)}</SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <Collapsible defaultOpen={currentPath.startsWith('/settings')}>
-          <SidebarGroup>
-            <CollapsibleTrigger className="w-full">
-              <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground">
-                {!collapsed && "Settings"}
-                {!collapsed && <ChevronDown className="h-3 w-3" />}
-              </SidebarGroupLabel>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>{renderItems(settingsItems)}</SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </SidebarGroup>
-        </Collapsible>
+        {/* Settings collapsible — Inventory Manager only */}
+        {isManager && (
+          <Collapsible defaultOpen={currentPath.startsWith('/settings')}>
+            <SidebarGroup>
+              <CollapsibleTrigger className="w-full">
+                <SidebarGroupLabel className="flex items-center justify-between cursor-pointer hover:text-foreground">
+                  {!collapsed && "Settings"}
+                  {!collapsed && <ChevronDown className="h-3 w-3" />}
+                </SidebarGroupLabel>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <SidebarGroupContent>
+                  <SidebarMenu>{renderItems(settingsItems)}</SidebarMenu>
+                </SidebarGroupContent>
+              </CollapsibleContent>
+            </SidebarGroup>
+          </Collapsible>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="px-2 pb-4 border-t border-border">
@@ -156,7 +151,10 @@ export function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleLogout} className="hover:bg-accent text-sidebar-foreground hover:text-primary cursor-pointer">
+            <SidebarMenuButton
+              onClick={handleLogout}
+              className="hover:bg-accent text-sidebar-foreground hover:text-primary cursor-pointer"
+            >
               <LogOut className="mr-2 h-4 w-4" />
               {!collapsed && <span>Logout</span>}
             </SidebarMenuButton>
