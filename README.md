@@ -99,7 +99,7 @@
 
 > Set `YOUR_VIDEO_ID` to your YouTube video id (the part after `v=`).
 
-<a href="https://www.youtube.com/watch?v=YOUR_VIDEO_ID" target="_blank" rel="noreferrer">
+<a href="https://youtu.be/iYm1uGx6z7g?si=M6OOPUZDcV-GbX5H" target="_blank" rel="noreferrer">
   <img
     src="https://img.youtube.com/vi/YOUR_VIDEO_ID/maxresdefault.jpg"
     alt="SmartInventory demo video (YouTube)"
